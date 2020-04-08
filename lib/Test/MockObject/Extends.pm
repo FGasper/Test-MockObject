@@ -173,21 +173,23 @@ sub gen_autoload
 
 sub mock
 {
-    my ($self, $name, $sub) = @_;
+    my ($self, @names_and_subs) = @_;
 
-    Test::MockObject::_set_log( $self, $name, ( $name =~ s/^-// ? 0 : 1 ) );
+    while ( my ($name, $sub) = splice @names_and_subs, 0, 2 ) {
+        Test::MockObject::_set_log( $self, $name, ( $name =~ s/^-// ? 0 : 1 ) );
 
-    my $mock_sub = sub 
-    {
-        my ($self) = @_;
-        $self->log_call( $name, @_ );
-        $sub->( @_ );
-    };
+        my $mock_sub = sub 
+        {
+            my ($self) = @_;
+            $self->log_call( $name, @_ );
+            $sub->( @_ );
+        };
 
-    {
-        no strict 'refs';
-        no warnings 'redefine';
-        *{ ref( $self ) . '::' . $name } = $mock_sub;
+        {
+            no strict 'refs';
+            no warnings 'redefine';
+            *{ ref( $self ) . '::' . $name } = $mock_sub;
+        }
     }
 
     return $self;
